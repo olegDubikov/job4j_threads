@@ -15,6 +15,7 @@ public class ConsoleProgress implements Runnable {
                 }
             }
         }
+        System.out.print("\n...Complete...");
     }
 
     public static void main(String[] args) {
@@ -26,7 +27,5 @@ public class ConsoleProgress implements Runnable {
             e.printStackTrace();
         }
         progress.interrupt();
-        System.out.println();
-        System.out.print("...Complete...");
     }
 }
