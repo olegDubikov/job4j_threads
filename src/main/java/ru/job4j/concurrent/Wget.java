@@ -18,43 +18,52 @@ public class Wget implements Runnable {
 
     @Override
     public void run() {
-        var startAt = System.currentTimeMillis();
-        var file = new File("tmp.xml");
+        String fileName = "file";
+        try {
+            String path = new URL(url).getPath();
+            fileName = path.substring(path.lastIndexOf('/') + 2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        File file = new File(fileName);
         int bufferSize = 1024;
         byte[] buffer = new byte[bufferSize];
-        long allowedTimeNs = 1_000_000_000L;
+        long startTime = System.currentTimeMillis();
+        long bytesReadTotal = 0;
         try (InputStream input = new URL(this.url).openStream();
              FileOutputStream output = new FileOutputStream(file)) {
-            System.out.println("Open connection: " + (System.currentTimeMillis()
-                    - startAt) + " ms");
             int bytesRead;
             while ((bytesRead = input.read(buffer)) != -1) {
-                long startTime = System.nanoTime();
                 output.write(buffer, 0, bytesRead);
-                long endTime = System.nanoTime();
-                long spentTime = endTime - startTime;
-                if (spentTime < allowedTimeNs) {
-                    long sleepTimeNs = allowedTimeNs - spentTime;
-                    try {
-                        long sleepMs = sleepTimeNs / 1_000_000L;
-                        int sleepNs = (int) (sleepTimeNs % 1_000_000L);
-                        Thread.sleep(sleepMs, sleepNs);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
+                bytesReadTotal += bytesRead;
+                if (bytesReadTotal >= speed) {
+                    long endTime = System.currentTimeMillis();
+                    long spentTime = endTime - startTime;
+                    if (spentTime >= 1000) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
                     }
+                    bytesReadTotal = 0;
+                    startTime = System.currentTimeMillis();
                 }
-                System.out.println("Read " + bytesRead + " bytes. Time spent: " + spentTime + " ms");
             }
+            System.out.println("Download finished.");
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Ошибка загрузки файла");
         }
         try {
-            System.out.println(Files.size(file.toPath()) + " bytes");
+            System.out.println("File size: " + Files.size(file.toPath()) + " bytes");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException();
         }
     }
+
 
     public static void main(String[] args) throws InterruptedException {
         if (args.length < 2) {
