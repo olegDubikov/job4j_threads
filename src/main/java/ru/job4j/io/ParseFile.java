@@ -16,8 +16,7 @@ public final class ParseFile {
         try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
             byte[] bytes = input.readAllBytes();
             for (var b : bytes) {
-                int letter = b & 0xFF;
-                char ch = (char) letter;
+                char ch = (char) b;
                 if (filter.test(ch)) {
                     sb.append(ch);
                 }
