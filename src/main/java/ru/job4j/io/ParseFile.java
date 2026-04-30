@@ -2,8 +2,6 @@ package ru.job4j.io;
 
 import java.io.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public final class ParseFile {
 
@@ -14,15 +12,19 @@ public final class ParseFile {
     }
 
     public String content(Predicate<Character> filter) throws IOException {
+        StringBuilder sb = new StringBuilder();
         try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
             byte[] bytes = input.readAllBytes();
-            return IntStream.range(0,bytes.length)
-                    .mapToObj(i ->(char)(bytes[i]&0xFF))
-                    .filter(filter)
-                    .map(String::valueOf)
-                    .collect(Collectors.joining());
+            for (var b : bytes) {
+                int letter = b & 0xFF;
+                char ch = (char) letter;
+                if (filter.test(ch)) {
+                    sb.append(ch);
+                }
+            }
         }
-}
+        return sb.toString();
+    }
 
     public String getContent() throws IOException {
         return content(ch -> true);
